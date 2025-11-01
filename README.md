@@ -11,10 +11,13 @@
 ## 1. Prueba de conocimiento
 
 -   **A ¿Cuál es el objetivo o funcionalidad del leguaje XML?**
-    ``` txt 
+    ``` bash
     Extensible Markup Language (XML)
     
-    Objetivo: permite de forma jerarquica y flexible presentar datos estucturados y facilita el intercambio de informacion en la web independiente del lenguaje de programacion o sistema operativo, deribado de SGML y es comlementario de HTML
+    Objetivo: permite de forma jerarquica y flexible presentar datos 
+    estucturados y facilita el intercambio de informacion en la web 
+    independiente del lenguaje de programacion o sistema operativo, 
+    deribado de SGML y es comlementario de HTML
 
     Funcionalidad: 
     - etiquetas personalizadas
@@ -22,12 +25,16 @@
     - intercambio de datos entre aplicaciones
     ```
 -   **B ¿Cuál es la diferencia entre un servicio Api/REST y uno WCF??**
-    ``` txt
-    la principal diferencia es WCF se utiliza para entornos microsoft complejos, es mas antiguo y pesado. Se utiliza en entornos empresariales Internos; REST es universal, moderno y lijero. Compatible con cualquier dispositivo.
+    ``` bash
+
+    la principal diferencia es WCF se utiliza para entornos microsoft 
+    complejos, es mas antiguo y pesado. Se utiliza en entornos 
+    empresariales Internos; REST es universal, moderno y lijero. 
+    Compatible con cualquier dispositivo.
     ```
 
 -   **C ¿Para qué casos sería recomendable usar una vista y no una tabla de la base de datos?**
-    ``` txt 
+    ``` bash 
     - simplifica consultas complejas 
     - permite otorgar permisos de acceso a informacion sensible
     - presentacion de datos de forma mas coherente, extrayendo la informacion necesaria
@@ -36,15 +43,68 @@
     - analisis o informes 
     ```
 -   **D ¿Cuál es el Objetivo o funcionalidad de una petición Json?**
-    ``` txt
+    ``` bash
     intercambio bidireccional y seguro de datos entre servidores
 
     - no envia ni recibe coockies ni autenticacion HTTP
     -solo trabaja con JSON 
     -especifica errores y retardos
+    ```
 
-    
 ## 2. Script de base de datos
+
+``` SQL
+CREATE TABLE IF NOT EXISTS country(
+id_country SERIAL PRIMARY KEY,
+cod_country CHAR(2) NOT NUL UNIQUE,
+name_country VARCHAR(100) NOT NULL,
+),
+CREATE TABLE IF NOT EXISTS departament(
+id_departament SERIAL PRIMARY KEY,
+name_departament VARCHAR(100) NOT NULL,
+id_pais INT NOT NULL REFERENCES country(id_country)
+),
+CREATE TABLE IF NOT EXISTS city(
+id_city
+name_city
+id_departament INT NOT NULL REFERENCES departament(id_departament)
+),
+
+
+CREATE TABLE IF NOT EXISTS payment_method(
+
+),
+
+CREATE TABLE IF NOT EXISTS invoice_payments(
+
+),
+CREATE TABLE IF NOT EXISTS customer(
+
+),
+
+CREATE TABLE IF NOT EXISTS customer_contact(
+
+),
+CREATE TABLE IF NOT EXISTS issuer(
+
+),
+CREATE TABLE IF NOT EXISTS product(
+
+),
+CREATE TABLE IF NOT EXISTS taxes(
+
+),
+CREATE TABLE IF NOT EXISTS product_taxes(
+
+),
+CREATE TABLE IF NOT EXISTS invoice(
+
+),
+CREATE TABLE IF NOT EXISTS invoice_detail(
+
+),
+
+```
 
 
 ## Autor
