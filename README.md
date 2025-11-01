@@ -11,18 +11,39 @@
 ## 1. Prueba de conocimiento
 
 -   **A ¿Cuál es el objetivo o funcionalidad del leguaje XML?**
-    > 
+    ``` txt 
+    Extensible Markup Language (XML)
+    
+    Objetivo: permite de forma jerarquica y flexible presentar datos estucturados y facilita el intercambio de informacion en la web independiente del lenguaje de programacion o sistema operativo, deribado de SGML y es comlementario de HTML
+
+    Funcionalidad: 
+    - etiquetas personalizadas
+    - estructura jerarquica
+    - intercambio de datos entre aplicaciones
+    ```
 -   **B ¿Cuál es la diferencia entre un servicio Api/REST y uno WCF??**
-    > 
+    ``` txt
+    la principal diferencia es WCF se utiliza para entornos microsoft complejos, es mas antiguo y pesado. Se utiliza en entornos empresariales Internos; REST es universal, moderno y lijero. Compatible con cualquier dispositivo.
+    ```
 
 -   **C ¿Para qué casos sería recomendable usar una vista y no una tabla de la base de datos?**
-    > 
-
+    ``` txt 
+    - simplifica consultas complejas 
+    - permite otorgar permisos de acceso a informacion sensible
+    - presentacion de datos de forma mas coherente, extrayendo la informacion necesaria
+    - reutilizacion de logica para no repetir consultas complejas
+    - optimizacion donde se reduce el tiempo de consultas repetidas
+    - analisis o informes 
+    ```
 -   **D ¿Cuál es el Objetivo o funcionalidad de una petición Json?**
-    > 
+    ``` txt
+    intercambio bidireccional y seguro de datos entre servidores
 
+    - no envia ni recibe coockies ni autenticacion HTTP
+    -solo trabaja con JSON 
+    -especifica errores y retardos
 
-
+    
 ## 2. Script de base de datos
 
 
