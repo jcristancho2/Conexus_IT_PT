@@ -1,0 +1,81 @@
+# ==================== BACKEND-SPECIFIC IGNORES ====================
+# Ignore Frontend directory when working on backend
+Frontend/node_modules/
+Frontend/dist/
+Frontend/build/
+Frontend/.vite/
+Frontend/.env*
+Frontend/coverage/
+Frontend/.nyc_output/
+Frontend/storybook-static/
+
+# ==================== FRONTEND-SPECIFIC IGNORES ====================
+# Ignore Backend build outputs when working on frontend  
+Backend/bin/
+Backend/obj/
+Backend/[Dd]ebug/
+Backend/[Rr]elease/
+Backend/.vs/
+
+# ==================== COMMON IGNORES ====================
+# Node modules (anywhere)
+**/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+out/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE_BIN/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Package manager lockfiles (uncomment what you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
