@@ -6,18 +6,17 @@
 ![Estado](https://img.shields.io/badge/Estado-En%20Desarrollo-%2328A745?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Disponible-%232496ED?style=for-the-badge&logo=docker)
 
-
-
+---
 ## 1. Prueba de conocimiento
 
--   **A ¿Cuál es el objetivo o funcionalidad del leguaje XML?**
+-   **A ¿Cuál es el objetivo o funcionalidad del lenguaje XML?**
     ``` bash
     Extensible Markup Language (XML)
     
     Objetivo: permite de forma jerarquica y flexible presentar datos 
-    estucturados y facilita el intercambio de informacion en la web 
+    estructurados y facilita el intercambio de informacion en la web 
     independiente del lenguaje de programacion o sistema operativo, 
-    deribado de SGML y es comlementario de HTML
+    derivado de SGML y es complementario de HTML
 
     Funcionalidad: 
     - etiquetas personalizadas
@@ -29,7 +28,7 @@
 
     la principal diferencia es WCF se utiliza para entornos microsoft 
     complejos, es mas antiguo y pesado. Se utiliza en entornos 
-    empresariales Internos; REST es universal, moderno y lijero. 
+    empresariales Internos; REST es universal, moderno y ligero. 
     Compatible con cualquier dispositivo.
     ```
 
@@ -46,17 +45,30 @@
     ``` bash
     intercambio bidireccional y seguro de datos entre servidores
 
-    - no envia ni recibe coockies ni autenticacion HTTP
+    - no envia ni recibe cookies ni autenticacion HTTP
     -solo trabaja con JSON 
     -especifica errores y retardos
     ```
 
 ## 2. Script de base de datos
 
-### creacion base de datos
+Escriba un script que permita crear una base de datos con la siguiente estructura
+(Incluir Llaves primarias y foráneas)
+
+![Tablas sin normalizar PT](image/db_v1.png "Tablas sin normalizar")
+
+Las relaciones entre las tablas serán las siguientes
+• Una Factura debe estar relacionada con un Cliente
+• Una Factura debe estar relacionada con un Emisor
+• Una Factura mínimo debe tener relacionado un detalleFactura
+• Cada detalleFactura debe estar relacionada con un Producto
+
+
+
+### creación base de datos
 
 ``` sql
-CREATE DATABASE sistema_facturacion
+CREATE DATABASE billing_system
 ```
 
 ### Tablas de Direccion 
@@ -179,7 +191,7 @@ CREATE TABLE IF NOT EXISTS product (
 CREATE TABLE IF NOT EXISTS tax (
     id_tax      SERIAL PRIMARY KEY,
     tax_name    VARCHAR(100) NOT NULL,
-    tax_rate    NUMERIC(7,4) NOT NULL CHECK (tax_rate >= 0)   -- e.g., 0.1900 = 19%
+    tax_rate    NUMERIC(7,4) NOT NULL CHECK (tax_rate >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS product_tax (
@@ -244,6 +256,11 @@ CREATE TABLE IF NOT EXISTS invoice_payment (
 
 ```
 
+### Diagrama DB 
+
+![DB normalizada 4FN](image/db_v2.png "DB normalizada 4FN")
+
+se realiza normalizacion de DB hasta su 4FN incluyendo campos necesarios y requeridos por la DIAN para la manejo de informacion contable.
 
 ## Autor
 [Jorge Andres Cristancho Olarte](https://github.com/jcristancho2)
