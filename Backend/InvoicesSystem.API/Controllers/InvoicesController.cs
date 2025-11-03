@@ -96,6 +96,10 @@ public class InvoicesController : ControllerBase
                 ApiResponse<InvoiceDto>.SuccessResponse(result, "Factura creada exitosamente")
             );
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<InvoiceDto>.ErrorResponse(ex.Message));
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Error en Create: {ex.Message}");

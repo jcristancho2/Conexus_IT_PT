@@ -50,7 +50,7 @@ public class MappingProfile : Profile
         CreateMap<CreateInvoiceDto, Invoice>()
             .ForMember(dest => dest.IdInvoice, opt => opt.Ignore())
             .ForMember(dest => dest.InvoiceNumber, opt => opt.Ignore())
-            .ForMember(dest => dest.InvoiceDate, opt => opt.MapFrom(src => DateTime.UtcNow.Date))
+            .ForMember(dest => dest.InvoiceDate, opt => opt.MapFrom(src => DateTime.UtcNow))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => InvoiceStatus.Draft))
             .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.SubtotalAmount))
             .ForMember(dest => dest.TotalTax, opt => opt.MapFrom(src => src.TaxAmount))
@@ -69,7 +69,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.SubtotalAmount)) // NUEVA
             .ForMember(dest => dest.TotalTax, opt => opt.MapFrom(src => src.TaxAmount)) // NUEVA
             .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.TotalAmount)) // NUEVA
-            .ForMember(dest => dest.DueDate, opt => opt.MapFrom(src => src.DueDate))
+            .ForMember(dest => dest.DueDate, opt => opt.MapFrom(src => src.DueDate.HasValue ? DateTime.SpecifyKind(src.DueDate.Value, DateTimeKind.Utc) : (DateTime?)null))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
             .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes))
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))

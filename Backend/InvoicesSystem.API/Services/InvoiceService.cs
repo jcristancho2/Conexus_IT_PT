@@ -59,9 +59,9 @@ public class InvoiceService : IInvoiceService
             {
                 InvoiceNumber = invoiceNumber,
                 IdCustomer = dto.IdCustomer,
-                // IdIssuer = 1, // ← COMENTAR ESTA LÍNEA TEMPORALMENTE
-                InvoiceDate = DateTime.UtcNow.Date,
-                DueDate = dto.DueDate?.Date,
+                // IdIssuer = 1,
+                InvoiceDate = DateTime.UtcNow,
+                DueDate = dto.DueDate.HasValue ? DateTime.SpecifyKind(dto.DueDate.Value, DateTimeKind.Utc) : (DateTime?)null,
                 Status = InvoiceStatus.Draft,
                 Subtotal = dto.SubtotalAmount,
                 TotalTax = dto.TaxAmount,
@@ -119,11 +119,17 @@ public class InvoiceService : IInvoiceService
             Console.WriteLine($"CreateAsync completado exitosamente");
             return result ?? throw new InvalidOperationException("Error en el mapeo de la factura");
         }
+        catch (DbUpdateException ex)
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            Console.WriteLine($"DbUpdateException en CreateAsync: {inner}");
+            throw new InvalidOperationException($"Error al guardar la factura: {inner}");
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Error en CreateAsync: {ex.Message}");
             Console.WriteLine($"StackTrace: {ex.StackTrace}");
-            throw;
+            throw new InvalidOperationException($"Error creando la factura: {ex.Message}");
         }
     }
 
@@ -146,8 +152,29 @@ public class InvoiceService : IInvoiceService
         if (invoice == null)
             return null;
 
+        // Validaciones de integridad referencial
+        var customer = await _customerRepository.GetByIdAsync(dto.IdCustomer);
+        if (customer == null)
+            throw new InvalidOperationException($"Customer con ID {dto.IdCustomer} no existe");
+
+        if (dto.Details != null && dto.Details.Any())
+        {
+            foreach (var detail in dto.Details)
+            {
+                var product = await _productRepository.GetByIdAsync(detail.IdProduct);
+                if (product == null)
+                    throw new InvalidOperationException($"Product con ID {detail.IdProduct} no existe");
+            }
+        }
+
         _mapper.Map(dto, invoice);
         invoice.UpdatedAt = DateTime.UtcNow;
+
+        // Asegurar DueDate en UTC
+        if (invoice.DueDate.HasValue)
+        {
+            invoice.DueDate = DateTime.SpecifyKind(invoice.DueDate.Value, DateTimeKind.Utc);
+        }
 
         // Sincronizar detalles si vienen en el DTO
         if (dto.Details != null)
@@ -191,8 +218,16 @@ public class InvoiceService : IInvoiceService
             }
         }
 
-        await _invoiceRepository.UpdateAsync(invoice);
-        await _invoiceRepository.SaveChangesAsync();
+        try
+        {
+            await _invoiceRepository.UpdateAsync(invoice);
+            await _invoiceRepository.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            throw new InvalidOperationException($"Error al guardar cambios de la factura: {inner}");
+        }
         var updatedInvoice = await _invoiceRepository.GetByIdWithDetailsAsync(id);
         
         return _mapper.Map<InvoiceDto>(updatedInvoice);
