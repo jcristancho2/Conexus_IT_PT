@@ -24,6 +24,11 @@ public class InvoiceDto
     public string? CustomerName { get; set; } // nombre del cliente
     public string? CustomerIdentification { get; set; } // identificacion del cliente
 
+    // datos del emisor
+    public int IdIssuer { get; set; } // id del emisor
+    public string? IssuerBusinessName { get; set; } // nombre del emisor o empresa emisora
+
+
     // detalles de la factura
     public List<InvoiceDetailDto> Details { get; set; } = new(); // detalles de la factura
 
