@@ -9,20 +9,21 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copiamos primero los .csproj para aprovechar caché de Docker
-COPY ["InvoicesSystem.API/InvoicesSystem.API.csproj", "InvoicesSystem.API/"]
+COPY ["Backend/InvoicesSystem.API/InvoicesSystem.API.csproj", "Backend/InvoicesSystem.API/"]
 
 # Restauramos dependencias
-RUN dotnet restore "InvoicesSystem.API/InvoicesSystem.API.csproj"
+RUN dotnet restore "Backend/InvoicesSystem.API/InvoicesSystem.API.csproj"
 
 # Copiamos el resto del código
 COPY . .
 
 # Compilamos el proyecto en modo Release
-WORKDIR "/src/InvoicesSystem.API"
+WORKDIR "/src/Backend/InvoicesSystem.API"
 RUN dotnet build "InvoicesSystem.API.csproj" -c Release -o /app/build
 
 # ---------- Publish ----------
 FROM build AS publish
+WORKDIR "/src/Backend/InvoicesSystem.API"
 RUN dotnet publish "InvoicesSystem.API.csproj" -c Release -o /app/publish --no-restore /p:UseAppHost=false
 
 # ---------- Final ----------
