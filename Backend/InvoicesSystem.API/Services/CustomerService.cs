@@ -129,6 +129,7 @@ public class CustomerService : ICustomerService
         customer.UpdatedAt = DateTime.UtcNow;
 
         await _customerRepository.UpdateAsync(customer);
+        await _customerRepository.SaveChangesAsync();
         return _mapper.Map<CustomerDto>(customer);
     }
 
@@ -139,6 +140,7 @@ public class CustomerService : ICustomerService
             return false;
 
         await _customerRepository.DeleteAsync(customer);
+        await _customerRepository.SaveChangesAsync();
         return true;
     }
 }

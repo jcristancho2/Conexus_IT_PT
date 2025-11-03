@@ -163,6 +163,7 @@ public class InvoiceService : IInvoiceService
             return false;
 
         await _invoiceRepository.DeleteAsync(invoice);
+        await _invoiceRepository.SaveChangesAsync();
         return true;
     }
 
