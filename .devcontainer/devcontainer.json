@@ -1,0 +1,87 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
+{
+	"name": "C# (.NET) - Invoices System",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
+	
+	// Features adicionales
+	"features": {
+		"ghcr.io/devcontainers/features/dotnet:2": {
+			"version": "9.0"
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts"
+		},
+		"ghcr.io/devcontainers/features/git:1": {}
+	},
+
+	// Comando post-creación: instalar herramientas
+	"postCreateCommand": "dotnet tool install --global dotnet-ef && echo 'export PATH=$PATH:/root/.dotnet/tools' >> ~/.bashrc && dotnet restore",
+
+	// Configuración de red Docker
+	"runArgs": [
+		"--network=billing_network"
+	],
+	
+	// Variables de entorno
+	"containerEnv": {
+		"REMOTE_CONTAINERS": "true",
+		"ASPNETCORE_ENVIRONMENT": "Development",
+		"ASPNETCORE_URLS": "http://+:8081"
+	},
+	
+	// Puertos a reenviar
+	"forwardPorts": [5000, 5001, 8080, 8081, 5434],
+
+	// Configuración de puertos
+	"portsAttributes": {
+		"5000": {
+			"label": "API HTTP",
+			"onAutoForward": "openBrowser"
+		},
+		"5001": {
+			"label": "API HTTPS",
+			"protocol": "https",
+			"onAutoForward": "notify"
+		},
+		"8080": {
+			"label": "pgAdmin",
+			"onAutoForward": "notify"
+		},
+		"8081": {
+			"label": "API Docker",
+			"onAutoForward": "notify"
+		},
+		"5434": {
+			"label": "PostgreSQL",
+			"onAutoForward": "notify"
+		}
+	},
+
+	// Configuraciones personalizadas
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.csdevkit",
+				"humao.rest-client"
+			],
+			"settings": {
+				"dotnet.defaultSolution": "Backend/InvoicesSystem.sln",
+				"files.exclude": {
+					"**/bin": true,
+					"**/obj": true
+				}
+			}
+		}
+	},
+
+	// Montajes de volúmenes
+	"mounts": [
+		"source=${localWorkspaceFolder},target=/workspaces/Conexus_IT_PT,type=bind,consistency=cached"
+	],
+
+	// Usuario por defecto (comentado para usar root)
+	// "remoteUser": "vscode"
+}

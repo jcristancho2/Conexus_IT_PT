@@ -1,0 +1,71 @@
+# Backend-specific .gitignore for Clean Architecture
+
+# Build results for all projects
+**/bin/
+**/obj/
+**/out/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/settings.json
+.vscode/launch.json
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Entity Framework
+**/Migrations/*
+!**/Migrations/
+!**/Migrations/*.cs
+
+# Application settings with sensitive data
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Staging.json
+**/appsettings.Production.json
+
+# Connection strings
+**/connectionstrings.json
+
+# Logs
+**/logs/
+**/*.log
+
+# NuGet packages
+**/packages/
+*.nupkg
+
+# Test results
+**/TestResults/
+**/coverage/
+
+# Temporary files
+**/tmp/
+**/*.tmp
+
+# Database files
+**/*.db
+**/*.sqlite*
+
+# Clean Architecture specific
+# Domain layer - keep clean (no external dependencies)
+# Application layer - keep business logic only
+# Infrastructure layer - database, external services configs
+# Presentation layer - API controllers, middleware
+
+# Swagger/OpenAPI generated files
+**/swagger.json
+**/swagger.yaml
+
+# Docker
+**/Dockerfile.dev
+**/docker-compose.override.yml
+
+# JWT Keys (if using)
+**/*.key
+**/*.pem
+**/keys/

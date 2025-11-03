@@ -1,0 +1,51 @@
+# Binarios y archivos compilados
+**/bin
+**/obj
+**/out
+
+# Archivos de usuario y configuración
+**/*.user
+**/*.suo
+**/*.cache
+**/*.log
+
+# Dependencias de Node.js (si las hay)
+**/node_modules
+
+# Archivos de desarrollo
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# Archivos temporales
+**/.tmp
+**/.temp
+**/tmp/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Otros archivos del sistema
+**/.DS_Store
+**/Thumbs.db
+**/*.bak
+
+# Archivos de prueba
+**/TestResults/
+**/*.trx
+
+# Archivos de documentación
+**/README.md
+**/docs/
+
+# Archivos de configuración local
+**/appsettings.Local.json
+**/secrets.json
