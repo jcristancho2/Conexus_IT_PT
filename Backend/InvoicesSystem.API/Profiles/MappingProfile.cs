@@ -34,11 +34,16 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.IdProduct, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
 
-        // Invoice Mappings - TEMPORALMENTE SIN CUSTOMER E ISSUER
+        // Invoice Mappings - con Customer e Issuer
         CreateMap<Invoice, InvoiceDto>()
-            .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => "Cliente Temporal"))
-            .ForMember(dest => dest.CustomerIdentification, opt => opt.MapFrom(src => "000000000"))
-            .ForMember(dest => dest.IssuerBusinessName, opt => opt.MapFrom(src => "Emisor Temporal"))
+            .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src =>
+                src.Customer != null
+                    ? (string.IsNullOrWhiteSpace(src.Customer.BusinessName)
+                        ? ($"{src.Customer.FirstName} {src.Customer.LastName}").Trim()
+                        : src.Customer.BusinessName)
+                    : string.Empty))
+            .ForMember(dest => dest.CustomerIdentification, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.IdentificationNumber : string.Empty))
+            .ForMember(dest => dest.IssuerBusinessName, opt => opt.MapFrom(src => src.Issuer != null ? src.Issuer.BusinessName : string.Empty))
             .ForMember(dest => dest.Details, opt => opt.MapFrom(src => src.InvoiceDetails))
             .ForMember(dest => dest.Payments, opt => opt.MapFrom(src => src.InvoicePayments));
 

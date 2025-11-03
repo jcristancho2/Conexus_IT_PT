@@ -59,9 +59,9 @@ public class Invoice
     [Column("updated_at")]
     public DateTime? UpdatedAt { get; set; }
 
-    // Propiedades de navegación - COMENTADAS TEMPORALMENTE
-    // public virtual Customer? Customer { get; set; }
-    // public virtual Issuer? Issuer { get; set; }
+    // Propiedades de navegación
+    public virtual Customer? Customer { get; set; }
+    public virtual Issuer? Issuer { get; set; }
     
     // Estas SÍ las dejamos
     public virtual ICollection<InvoiceDetail> InvoiceDetails { get; set; } = new List<InvoiceDetail>();

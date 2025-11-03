@@ -142,12 +142,54 @@ public class InvoiceService : IInvoiceService
 
     public async Task<InvoiceDto?> UpdateAsync(int id, UpdateInvoiceDto dto)
     {
-        var invoice = await _invoiceRepository.GetByIdAsync(id);
+        var invoice = await _invoiceRepository.GetByIdWithDetailsAsync(id);
         if (invoice == null)
             return null;
 
         _mapper.Map(dto, invoice);
         invoice.UpdatedAt = DateTime.UtcNow;
+
+        // Sincronizar detalles si vienen en el DTO
+        if (dto.Details != null)
+        {
+            var existingDetailsByProduct = invoice.InvoiceDetails.ToDictionary(d => d.IdProduct);
+            var targetProductIds = dto.Details.Select(d => d.IdProduct).ToHashSet();
+
+            // Eliminar detalles que ya no vienen
+            var toRemove = invoice.InvoiceDetails.Where(d => !targetProductIds.Contains(d.IdProduct)).ToList();
+            foreach (var rem in toRemove)
+            {
+                invoice.InvoiceDetails.Remove(rem);
+            }
+
+            // Agregar/Actualizar detalles
+            foreach (var detailDto in dto.Details)
+            {
+                if (existingDetailsByProduct.TryGetValue(detailDto.IdProduct, out var existing))
+                {
+                    existing.Quantity = detailDto.Quantity;
+                    existing.UnitPrice = detailDto.UnitPrice;
+                    existing.Discount = detailDto.DiscountAmount;
+                    existing.Subtotal = detailDto.TotalAmount;
+                    existing.UpdatedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    var newDetail = new InvoiceDetail
+                    {
+                        IdInvoice = invoice.IdInvoice,
+                        IdProduct = detailDto.IdProduct,
+                        Quantity = detailDto.Quantity,
+                        UnitPrice = detailDto.UnitPrice,
+                        Discount = detailDto.DiscountAmount,
+                        Subtotal = detailDto.TotalAmount,
+                        Description = string.Empty,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    invoice.InvoiceDetails.Add(newDetail);
+                }
+            }
+        }
 
         await _invoiceRepository.UpdateAsync(invoice);
         await _invoiceRepository.SaveChangesAsync();

@@ -80,7 +80,7 @@ public class AppDbContext : DbContext
         modelBuilder.HasPostgresEnum<Models.Enums.PersonType>();
         modelBuilder.HasPostgresEnum<Models.Enums.ContactType>();
 
-        // Configuración explícita de Invoice - SIMPLIFICADA
+        // Configuración explícita de Invoice
         modelBuilder.Entity<Invoice>(entity =>
         {
             entity.HasKey(e => e.IdInvoice);
@@ -91,9 +91,19 @@ public class AppDbContext : DbContext
                 .HasColumnName("id_invoice")
                 .ValueGeneratedOnAdd();
             
-            // Solo foreign keys, SIN relaciones de navegación
             entity.Property(e => e.IdCustomer).HasColumnName("id_customer");
             entity.Property(e => e.IdIssuer).HasColumnName("id_issuer");
+
+            // Relaciones de navegación
+            entity.HasOne<Customer>(e => e.Customer)
+                .WithMany(c => c.Invoices)
+                .HasForeignKey(e => e.IdCustomer)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<Issuer>(e => e.Issuer)
+                .WithMany(i => i.Invoices)
+                .HasForeignKey(e => e.IdIssuer)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Solo las colecciones que SÍ existen
             entity.HasMany(e => e.InvoiceDetails)

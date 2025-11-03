@@ -20,10 +20,9 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
     public async Task<Invoice?> GetByIdWithDetailsAsync(int id)
     {
         return await _dbSet
-            // COMENTAR referencias a Customer e Issuer TEMPORALMENTE
-            // .Include(i => i.Customer)
-            //     .ThenInclude(c => c!.Address) 
-            // .Include(i => i.Issuer)
+            .Include(i => i.Customer)
+                .ThenInclude(c => c!.Address)
+            .Include(i => i.Issuer)
             .Include(i => i.InvoiceDetails!) 
                 .ThenInclude(id => id.Product)
             .Include(i => i.InvoiceDetails!)
@@ -37,9 +36,8 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
     public async Task<IEnumerable<Invoice>> GetAllWithDetailsAsync()
     {
         return await _dbSet
-            // COMENTAR referencias a Customer e Issuer TEMPORALMENTE
-            // .Include(i => i.Customer)
-            // .Include(i => i.Issuer)
+            .Include(i => i.Customer)
+            .Include(i => i.Issuer)
             .Include(i => i.InvoiceDetails)
             .Include(i => i.InvoicePayments)
             .OrderByDescending(i => i.InvoiceDate)
@@ -59,8 +57,7 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
     public async Task<IEnumerable<Invoice>> GetByStatusAsync(InvoiceStatus status)
     {
         return await _dbSet
-            // COMENTAR referencia a Customer TEMPORALMENTE
-            // .Include(i => i.Customer)
+            .Include(i => i.Customer)
             .Include(i => i.InvoiceDetails)
             .Where(i => i.Status == status)
             .OrderByDescending(i => i.InvoiceDate)
@@ -70,8 +67,7 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
     public async Task<IEnumerable<Invoice>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
     {
         return await _dbSet
-            // COMENTAR referencia a Customer TEMPORALMENTE
-            // .Include(i => i.Customer)
+            .Include(i => i.Customer)
             .Include(i => i.InvoiceDetails)
             .Where(i => i.InvoiceDate >= startDate && i.InvoiceDate <= endDate)
             .OrderByDescending(i => i.InvoiceDate)
@@ -132,8 +128,7 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
     public async Task<(IEnumerable<Invoice> invoices, int total)> GetPagedAsync(int page = 1, int pageSize = 10, string? search = null)
     {
         var query = _context.Invoices
-            // COMENTAR referencia a Customer TEMPORALMENTE
-            // .Include(i => i.Customer)
+            .Include(i => i.Customer)
             .Include(i => i.InvoiceDetails)
                 .ThenInclude(d => d.Product)
             .Include(i => i.InvoicePayments)
@@ -144,11 +139,12 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
         {
             query = query.Where(i => 
                 i.InvoiceNumber!.Contains(search)
-                // COMENTAR búsquedas por Customer TEMPORALMENTE
-                // || i.Customer!.FirstName!.Contains(search) 
-                // || i.Customer!.LastName!.Contains(search) 
-                // || i.Customer!.IdentificationNumber!.Contains(search) 
-                // || i.Customer!.BusinessName!.Contains(search)
+                || (i.Customer != null && (
+                    (i.Customer.FirstName != null && i.Customer.FirstName.Contains(search))
+                    || (i.Customer.LastName != null && i.Customer.LastName.Contains(search))
+                    || i.Customer.IdentificationNumber.Contains(search)
+                    || (i.Customer.BusinessName != null && i.Customer.BusinessName.Contains(search))
+                ))
             );
         }
 
