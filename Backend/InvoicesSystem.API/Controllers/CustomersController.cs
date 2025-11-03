@@ -4,234 +4,124 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using InvoicesSystem.API.Data;
+using Microsoft.AspNetCore.Authorization;
+using InvoicesSystem.API.Services.Interfaces;
 using InvoicesSystem.API.Models.DTOs;
-using InvoicesSystem.API.Models.Entities;
-using InvoicesSystem.API.Models.Enums;
+using InvoicesSystem.API.Models.Responses;
 
 namespace InvoicesSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CustomersController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly ICustomerService _customerService;
 
-    public CustomersController(AppDbContext context)
+    public CustomersController(ICustomerService customerService)
     {
-        _context = context;
+        _customerService = customerService;
     }
 
-    // GET: api/Customers
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CustomerDto>>> GetCustomers(
-        [FromQuery] string? search = null,
+    public async Task<ActionResult<ApiResponse<IEnumerable<CustomerDto>>>> GetAll(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null)
     {
-        var query = _context.Customers
-            .Include(c => c.Address)
-                .ThenInclude(a => a.City)
-                    .ThenInclude(c => c.Departament)
-                        .ThenInclude(d => d.Country)
-            .Include(c => c.TaxRegime)
-            .Include(c => c.TaxResponsibility)
-            .Include(c => c.CustomerContacts)
-            .AsQueryable();
+        var (customers, total) = await _customerService.GetAllAsync(page, pageSize, search);
 
-        if (!string.IsNullOrWhiteSpace(search))
+        Response.Headers["X-Total-Count"] = total.ToString();
+        Response.Headers["X-Page"] = page.ToString();
+        Response.Headers["X-Page-Size"] = pageSize.ToString();
+
+        return Ok(ApiResponse<IEnumerable<CustomerDto>>.SuccessResponse(
+            customers,
+            $"Se encontraron {total} clientes"
+        ));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<CustomerDto>>> GetById(int id)
+    {
+        var customer = await _customerService.GetByIdAsync(id);
+
+        if (customer == null)
+            return NotFound(ApiResponse<CustomerDto>.NotFoundResponse("Cliente no encontrado"));
+
+        return Ok(ApiResponse<CustomerDto>.SuccessResponse(customer, "Cliente obtenido exitosamente"));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<CustomerDto>>> Create([FromBody] CreateCustomerDto dto)
+    {
+        if (!ModelState.IsValid)
         {
-            query = query.Where(c =>
-                c.IdentificationNumber.Contains(search) ||
-                (c.FirstName != null && c.FirstName.Contains(search)) ||
-                (c.LastName != null && c.LastName.Contains(search)) ||
-                (c.BusinessName != null && c.BusinessName.Contains(search)) ||
-                (c.CommercialName != null && c.CommercialName.Contains(search))
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(ApiResponse<CustomerDto>.ValidationErrorResponse(errors));
+        }
+
+        try
+        {
+            var customer = await _customerService.CreateAsync(dto);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = customer.IdCustomer },
+                ApiResponse<CustomerDto>.SuccessResponse(customer, "Cliente creado exitosamente")
             );
         }
-
-        var total = await query.CountAsync();
-        
-        var customers = await query
-            .OrderBy(c => c.IdCustomer)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        var result = customers.Select(c => MapToDto(c)).ToList();
-
-        Response.Headers.Add("X-Total-Count", total.ToString());
-        Response.Headers.Add("X-Page", page.ToString());
-        Response.Headers.Add("X-Page-Size", pageSize.ToString());
-
-        return Ok(result);
-    }
-
-    // GET: api/Customers/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<CustomerDto>> GetCustomer(int id)
-    {
-        var customer = await _context.Customers
-            .Include(c => c.Address)
-                .ThenInclude(a => a.City)
-                    .ThenInclude(c => c.Departament)
-                        .ThenInclude(d => d.Country)
-            .Include(c => c.TaxRegime)
-            .Include(c => c.TaxResponsibility)
-            .Include(c => c.CustomerContacts)
-            .FirstOrDefaultAsync(c => c.IdCustomer == id);
-
-        if (customer == null)
-            return NotFound(new { message = $"Cliente con ID {id} no encontrado" });
-
-        return Ok(MapToDto(customer));
-    }
-
-    // POST: api/Customers
-    [HttpPost]
-    public async Task<ActionResult<CustomerDto>> CreateCustomer(CreateCustomerDto dto)
-    {
-        // Validar que no exista un cliente con la misma identificación
-        var existingCustomer = await _context.Customers
-            .FirstOrDefaultAsync(c => c.IdentificationNumber == dto.IdentificationNumber);
-        
-        if (existingCustomer != null)
-            return BadRequest(new { message = "Ya existe un cliente con ese número de identificación" });
-
-        // Validar dirección
-        var address = await _context.Addresses.FindAsync(dto.IdAddress);
-        if (address == null)
-            return BadRequest(new { message = "Dirección no encontrada" });
-
-        var customer = new Customer
+        catch (InvalidOperationException ex)
         {
-            IdTypeIdentification = dto.IdTypeIdentification,
-            IdentificationNumber = dto.IdentificationNumber,
-            PersonType = dto.PersonType,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            BusinessName = dto.BusinessName,
-            CommercialName = dto.CommercialName,
-            IdAddress = dto.IdAddress,
-            IdTaxRegime = dto.IdTaxRegime,
-            IdTaxResponsibility = dto.IdTaxResponsibility,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        // Agregar contactos
-        foreach (var contactDto in dto.Contacts)
-        {
-            customer.CustomerContacts.Add(new CustomerContact
-            {
-                ContactType = contactDto.ContactType,
-                ContactValue = contactDto.ContactValue,
-                CreatedAt = DateTime.UtcNow
-            });
+            return Conflict(ApiResponse<CustomerDto>.ErrorResponse(ex.Message));
         }
-
-        _context.Customers.Add(customer);
-        await _context.SaveChangesAsync();
-
-        // Recargar con todas las relaciones
-        var createdCustomer = await _context.Customers
-            .Include(c => c.Address)
-                .ThenInclude(a => a.City)
-                    .ThenInclude(c => c.Departament)
-                        .ThenInclude(d => d.Country)
-            .Include(c => c.TaxRegime)
-            .Include(c => c.TaxResponsibility)
-            .Include(c => c.CustomerContacts)
-            .FirstAsync(c => c.IdCustomer == customer.IdCustomer);
-
-        return CreatedAtAction(nameof(GetCustomer), new { id = customer.IdCustomer }, MapToDto(createdCustomer));
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<CustomerDto>.ErrorResponse($"Error interno: {ex.Message}"));
+        }
     }
 
-    // PUT: api/Customers/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCustomer(int id, CreateCustomerDto dto)
+    public async Task<ActionResult<ApiResponse<CustomerDto>>> Update(int id, [FromBody] UpdateCustomerDto dto)
     {
-        var customer = await _context.Customers
-            .Include(c => c.CustomerContacts)
-            .FirstOrDefaultAsync(c => c.IdCustomer == id);
-        
-        if (customer == null)
-            return NotFound(new { message = $"Cliente con ID {id} no encontrado" });
-
-        customer.IdTypeIdentification = dto.IdTypeIdentification;
-        customer.IdentificationNumber = dto.IdentificationNumber;
-        customer.PersonType = dto.PersonType;
-        customer.FirstName = dto.FirstName;
-        customer.LastName = dto.LastName;
-        customer.BusinessName = dto.BusinessName;
-        customer.CommercialName = dto.CommercialName;
-        customer.IdAddress = dto.IdAddress;
-        customer.IdTaxRegime = dto.IdTaxRegime;
-        customer.IdTaxResponsibility = dto.IdTaxResponsibility;
-        customer.UpdatedAt = DateTime.UtcNow;
-
-        // Actualizar contactos
-        _context.CustomerContacts.RemoveRange(customer.CustomerContacts);
-        
-        foreach (var contactDto in dto.Contacts)
+        if (!ModelState.IsValid)
         {
-            customer.CustomerContacts.Add(new CustomerContact
-            {
-                ContactType = contactDto.ContactType,
-                ContactValue = contactDto.ContactValue,
-                CreatedAt = DateTime.UtcNow
-            });
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(ApiResponse<CustomerDto>.ValidationErrorResponse(errors));
         }
 
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    // DELETE: api/Customers/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCustomer(int id)
-    {
-        var customer = await _context.Customers.FindAsync(id);
-        
-        if (customer == null)
-            return NotFound(new { message = $"Cliente con ID {id} no encontrado" });
-
-        // Verificar si tiene facturas
-        var hasInvoices = await _context.Invoices.AnyAsync(i => i.IdCustomer == id);
-        if (hasInvoices)
-            return BadRequest(new { message = "No se puede eliminar el cliente porque tiene facturas asociadas" });
-
-        _context.Customers.Remove(customer);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    private CustomerDto MapToDto(Customer customer)
-    {
-        return new CustomerDto
+        try
         {
-            IdCustomer = customer.IdCustomer,
-            IdentificationNumber = customer.IdentificationNumber ?? "",
-            PersonType = customer.PersonType,
-            FirstName = customer.FirstName,
-            LastName = customer.LastName,
-            BusinessName = customer.BusinessName,
-            CommercialName = customer.CommercialName,
-            FullAddress = customer.Address?.FullAddress ?? "",
-            CityName = customer.Address?.City?.NameCity ?? "",
-            DepartmentName = customer.Address?.City?.Departament?.NameDepartment ?? "",
-            CountryName = customer.Address?.City?.Departament?.Country?.Name_country ?? "",
-            TaxRegimeCode = customer.TaxRegime?.Code ?? "",
-            TaxResponsibilityCode = customer.TaxResponsibility?.Code ?? "",
-            Contacts = customer.CustomerContacts?.Select(c => new CustomerContactDto
-            {
-                IdCustomerContact = c.IdCustomerContact,
-                ContactType = c.ContactType,
-                ContactValue = c.ContactValue ?? ""
-            }).ToList() ?? new List<CustomerContactDto>(),
-            CreatedAt = customer.CreatedAt
-        };
+            var customer = await _customerService.UpdateAsync(id, dto);
+
+            if (customer == null)
+                return NotFound(ApiResponse<CustomerDto>.NotFoundResponse("Cliente no encontrado"));
+
+            return Ok(ApiResponse<CustomerDto>.SuccessResponse(customer, "Cliente actualizado exitosamente"));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ApiResponse<CustomerDto>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<CustomerDto>.ErrorResponse($"Error interno: {ex.Message}"));
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
+    {
+        var result = await _customerService.DeleteAsync(id);
+
+        if (!result)
+            return NotFound(ApiResponse<object>.NotFoundResponse("Cliente no encontrado"));
+
+        return Ok(ApiResponse<object>.SuccessResponse("Cliente eliminado exitosamente"));
     }
 }

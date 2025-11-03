@@ -46,13 +46,12 @@ public class CustomerRepository : GenericRepository<Customer>, ICustomerReposito
 
     public async Task<bool> ExistsByIdentificationAsync(string identificationNumber, int? excludeId = null)
     {
-        var query = _dbSet.Where(c => c.IdentificationNumber == identificationNumber);
-        
+        var query = _context.Customers
+            .Where(c => c.IdentificationNumber == identificationNumber);
+
         if (excludeId.HasValue)
-        {
             query = query.Where(c => c.IdCustomer != excludeId.Value);
-        }
-        
+
         return await query.AnyAsync();
     }
 
@@ -71,13 +70,13 @@ public class CustomerRepository : GenericRepository<Customer>, ICustomerReposito
             .ToListAsync();
     }
 
-    public async Task<(IEnumerable<Customer> customers, int total)> GetPagedAsync(int page, int pageSize, string? search = null)
+    public async Task<(IEnumerable<Customer> customers, int total)> GetPagedAsync(int page = 1, int pageSize = 10, string? search = null)
     {
-        var query = _dbSet
-            .Include(c => c.Address!)
-                .ThenInclude(a => a.City!)
-                    .ThenInclude(c => c.Department!)
-                        .ThenInclude(d => d.Country)
+        var query = _context.Customers
+            .Include(c => c.Address)
+                .ThenInclude(a => a!.City)
+                    .ThenInclude(city => city!.Department)
+                        .ThenInclude(dept => dept!.Country)
             .Include(c => c.TypeIdentification)
             .Include(c => c.TaxRegime)
             .Include(c => c.TaxResponsibility)
@@ -87,16 +86,14 @@ public class CustomerRepository : GenericRepository<Customer>, ICustomerReposito
         if (!string.IsNullOrWhiteSpace(search))
         {
             query = query.Where(c => 
-                c.Email!.Contains(search) ||
+                c.FirstName!.Contains(search) || 
+                c.LastName!.Contains(search) || 
                 c.IdentificationNumber!.Contains(search) ||
-                (c.FirstName != null && c.FirstName.Contains(search)) ||
-                (c.LastName != null && c.LastName.Contains(search)) ||
-                (c.BusinessName != null && c.BusinessName.Contains(search)));
+                c.BusinessName!.Contains(search));
         }
 
         var total = await query.CountAsync();
         var customers = await query
-            .OrderBy(c => c.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

@@ -31,25 +31,23 @@ public class CreateCustomerDto
 
     [StringLength(100)]
     public string? CommercialName { get; set; } // nombre comercial
-    
+
+    // Address
     [Required]
-    public int IdAddress { get; set; } // id de la direccion
-    
+    public int IdCity { get; set; } // id de la ciudad
+
+    [Required]
+    [StringLength(200)]
+    public string? FullAddress { get; set; } // direccion completa
+
+    // Tax Info
     [Required]
     public int IdTaxRegime { get; set; } // id del regimen tributario
-    
+
     [Required]
     public int IdTaxResponsibility { get; set; } // id de la responsabilidad tributaria
-    
-    public List<CreateCustomerContactDto> Contacts { get; set; } = new(); // lista de contactos
+
+    // Contacts
+    public List<CreateCustomerContactDto>? Contacts { get; set; } // lista de contactos
 }
 
-public class CreateCustomerContactDto
-{
-    [Required]
-    public ContactType ContactType { get; set; } // tipo de contacto
-    
-    [Required]
-    [StringLength(100)]
-    public string? ContactValue { get; set; } // valor del contacto
-}

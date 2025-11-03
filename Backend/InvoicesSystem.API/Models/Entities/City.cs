@@ -21,11 +21,11 @@ namespace InvoicesSystem.API.Models.Entities
 
         [Required]
         [Column("id_department")]
-        [ForeignKey(nameof(Departament))]
+        [ForeignKey(nameof(Department))]
         public int IdDepartment { get; set; }
 
         // propiedad de navegacion
-        public virtual Departament? Departament { get; set; }
+        public virtual Department? Department { get; set; }
         public virtual ICollection<Address> Addresses { get; set; } = new HashSet<Address>();
     }
 }

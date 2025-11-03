@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using InvoicesSystem.API.Models.Enums;
@@ -14,15 +11,15 @@ public class Invoice
 {
     [Key]
     [Column("id_invoice")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // ← IMPORTANTE
     public int IdInvoice { get; set; }
 
     [Required]
     [Column("id_customer")]
     public int IdCustomer { get; set; }
 
-    [Required]
     [Column("id_issuer")]
-    public int IdIssuer { get; set; }
+    public int? IdIssuer { get; set; }
 
     [Required]
     [StringLength(50)]
@@ -62,11 +59,11 @@ public class Invoice
     [Column("updated_at")]
     public DateTime? UpdatedAt { get; set; }
 
-    // propiedades de navegacion
-
-    public virtual Customer? Customer { get; set; }
-    public virtual Issuer? Issuer { get; set; }
-
-    public virtual ICollection<InvoiceDetail>? InvoiceDetails { get; set; }
-    public virtual ICollection<InvoicePayment>? InvoicePayments { get; set; }
+    // Propiedades de navegación - COMENTADAS TEMPORALMENTE
+    // public virtual Customer? Customer { get; set; }
+    // public virtual Issuer? Issuer { get; set; }
+    
+    // Estas SÍ las dejamos
+    public virtual ICollection<InvoiceDetail> InvoiceDetails { get; set; } = new List<InvoiceDetail>();
+    public virtual ICollection<InvoicePayment> InvoicePayments { get; set; } = new List<InvoicePayment>();
 }

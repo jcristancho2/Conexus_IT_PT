@@ -38,30 +38,5 @@ public class InvoiceDto
     public DateTime? UpdatedAt { get; set; }
 
 }
-public class InvoiceDetailDto
-{
-    public int IdProduct { get; set; } // id del producto
-    public string? ProductName { get; set; } // nombre del producto
-    public decimal Quantity { get; set; } // cantidad
-    public decimal UnitPrice { get; set; } // precio unitario
-    public decimal Discount { get; set; } // descuento
-    public decimal Subtotal { get; set; } // subtotal
-    public string? Description { get; set; } // descripcion
-    public List<InvoiceDetailTaxDto> Taxes { get; set; } = new(); // impuestos aplicados
-}
-public class InvoiceDetailTaxDto
-{
-    public int IdTax { get; set; } // id del impuesto
-    public string? TaxName { get; set; } // nombre del impuesto
-    public decimal TaxRate { get; set; } // tasa del impuesto
-    public decimal TaxBase { get; set; } // base del impuesto
-    public decimal TaxAmount { get; set; } // monto del impuesto
-}
-public class InvoicePaymentDto 
-{
-    public int IdPaymentMethod { get; set; } // id del metodo de pago
-    public string? PaymentMethodName { get; set; } // nombre del metodo de pago
-    public decimal Amount { get; set; } // monto
-    public DateTime PaymentDate { get; set; } // fecha de pago
-    public string? Reference { get; set; } // referencia
-}
+
+

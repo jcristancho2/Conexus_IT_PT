@@ -43,16 +43,22 @@ public class AppDbContext : DbContext
     public DbSet<InvoiceDetailTax> InvoiceDetailTaxes { get; set; }
     public DbSet<InvoicePayment> InvoicePayments { get; set; }
 
+    public DbSet<User> Users { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
         // Configuración de claves compuestas
         modelBuilder.Entity<ProductTax>()
             .HasKey(pt => new { pt.IdProduct, pt.IdTax });
+        
         modelBuilder.Entity<InvoiceDetail>()
             .HasKey(id => new { id.IdInvoice, id.IdProduct });
+        
         modelBuilder.Entity<InvoiceDetailTax>()
             .HasKey(idt => new { idt.IdInvoice, idt.IdProduct, idt.IdTax });
+        
         modelBuilder.Entity<InvoicePayment>()
             .HasKey(ip => new { ip.IdInvoice, ip.IdPaymentMethod });
 
@@ -62,6 +68,7 @@ public class AppDbContext : DbContext
             .WithMany(id => id.InvoiceDetailTaxes)
             .HasForeignKey(idt => new { idt.IdInvoice, idt.IdProduct })
             .OnDelete(DeleteBehavior.Cascade);
+        
         modelBuilder.Entity<InvoiceDetailTax>()
             .HasOne(idt => idt.Tax)
             .WithMany(t => t.InvoiceDetailTaxes)
@@ -72,5 +79,33 @@ public class AppDbContext : DbContext
         modelBuilder.HasPostgresEnum<Models.Enums.InvoiceStatus>();
         modelBuilder.HasPostgresEnum<Models.Enums.PersonType>();
         modelBuilder.HasPostgresEnum<Models.Enums.ContactType>();
+
+        // Configuración explícita de Invoice - SIMPLIFICADA
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.HasKey(e => e.IdInvoice);
+            entity.ToTable("invoice");
+            
+            // Configurar la clave primaria con auto-generación
+            entity.Property(e => e.IdInvoice)
+                .HasColumnName("id_invoice")
+                .ValueGeneratedOnAdd();
+            
+            // Solo foreign keys, SIN relaciones de navegación
+            entity.Property(e => e.IdCustomer).HasColumnName("id_customer");
+            entity.Property(e => e.IdIssuer).HasColumnName("id_issuer");
+
+            // Solo las colecciones que SÍ existen
+            entity.HasMany(e => e.InvoiceDetails)
+                .WithOne(d => d.Invoice)
+                .HasForeignKey(d => d.IdInvoice)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.InvoicePayments)
+                .WithOne(p => p.Invoice)
+                .HasForeignKey(p => p.IdInvoice)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
     }
 }

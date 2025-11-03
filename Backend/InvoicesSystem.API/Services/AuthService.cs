@@ -30,109 +30,80 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse?> LoginAsync(string email, string password)
     {
-        var customer = await _context.Customers
-            .Include(c => c.CustomerContacts)
-            .Include(c => c.Address)
-                .ThenInclude(a => a!.City)
-                    .ThenInclude(c => c!.Department)
-                        .ThenInclude(d => d!.Country)
-            .Include(c => c.TypeIdentification)
-            .Include(c => c.TaxRegime)
-            .Include(c => c.TaxResponsibility)
-            .FirstOrDefaultAsync(c => c.Email == email);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
 
-        if (customer == null)
+        if (user == null || user.PasswordHash != password)
             return null;
 
-        // Comparar password directamente (sin hash por ahora)
-        if (customer.PasswordHash != password)
-            return null;
-
-        var token = GenerateJwtToken(customer);
-
-        // ✅ LÍNEA 53 CORREGIDA - Usar GetValue en lugar de int.Parse
+        var token = GenerateJwtToken(user);
         var expirationMinutes = _configuration.GetValue<int>("Jwt:ExpirationInMinutes", 1440);
 
         return new LoginResponse
         {
             Token = token,
             Expiration = DateTime.UtcNow.AddMinutes(expirationMinutes),
-            Customer = MapToDto(customer)
+            User = new UserDto
+            {
+                IdUser = user.IdUser,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Role = user.Role,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt
+            }
         };
     }
 
     public async Task<LoginResponse?> RegisterAsync(RegisterRequest request)
     {
-        // Verificar si el usuario ya existe
-        var existingCustomer = await _context.Customers
-            .FirstOrDefaultAsync(c => c.Email == request.Email);
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email);
 
-        if (existingCustomer != null)
+        if (existingUser != null)
             return null;
 
-        // Crear dirección
-        var address = new Address
+        var user = new User
         {
-            FullAddress = request.FullAddress,
-            IdCity = request.IdCity
-        };
-
-        _context.Addresses.Add(address);
-        await _context.SaveChangesAsync();
-
-        // Crear cliente
-        var customer = new Customer
-        {
-            IdTypeIdentification = request.IdTypeIdentification,
-            IdentificationNumber = request.IdentificationNumber,
-            PersonType = request.PersonType,
+            Email = request.Email,
+            PasswordHash = request.Password,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            BusinessName = request.BusinessName,
-            CommercialName = request.CommercialName,
-            IdAddress = address.IdAddress,
-            IdTaxRegime = request.IdTaxRegime,
-            IdTaxResponsibility = request.IdTaxResponsibility,
-            Email = request.Email,
-            PasswordHash = request.Password, // Sin hash por ahora
+            Role = request.Role,
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Customers.Add(customer);
+        _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // Recargar con relaciones
-        customer = await _context.Customers
-            .Include(c => c.CustomerContacts)
-            .Include(c => c.Address)
-                .ThenInclude(a => a!.City)
-                    .ThenInclude(c => c!.Department)
-                        .ThenInclude(d => d!.Country)
-            .Include(c => c.TypeIdentification)
-            .Include(c => c.TaxRegime)
-            .Include(c => c.TaxResponsibility)
-            .FirstAsync(c => c.IdCustomer == customer.IdCustomer);
-
-        var token = GenerateJwtToken(customer);
-        
+        var token = GenerateJwtToken(user);
         var expirationMinutes = _configuration.GetValue<int>("Jwt:ExpirationInMinutes", 1440);
 
         return new LoginResponse
         {
             Token = token,
             Expiration = DateTime.UtcNow.AddMinutes(expirationMinutes),
-            Customer = MapToDto(customer)
+            User = new UserDto
+            {
+                IdUser = user.IdUser,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Role = user.Role,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt
+            }
         };
     }
 
-    public async Task<Customer?> GetUserByEmailAsync(string email)
+    public async Task<User?> GetUserByEmailAsync(string email) // Cambiado de Customer a User
     {
-        return await _context.Customers
-            .Include(c => c.CustomerContacts)
-            .FirstOrDefaultAsync(c => c.Email == email);
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
     }
 
-    public string GenerateJwtToken(Customer customer)
+    public string GenerateJwtToken(User user) // Cambiado de Customer a User
     {
         var jwtKey = _configuration["Jwt:Key"];
         var issuer = _configuration["Jwt:Issuer"] ?? "InvoicesSystem.API";
@@ -144,15 +115,14 @@ public class AuthService : IAuthService
         }
 
         var key = Encoding.UTF8.GetBytes(jwtKey);
-        
         var expirationMinutes = _configuration.GetValue<int>("Jwt:ExpirationInMinutes", 1440);
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, customer.IdCustomer.ToString()),
-            new Claim(ClaimTypes.Email, customer.Email),
-            new Claim(ClaimTypes.Name, $"{customer.FirstName} {customer.LastName}".Trim()),
-            new Claim("PersonType", customer.PersonType.ToString())
+            new Claim(ClaimTypes.NameIdentifier, user.IdUser.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
+            new Claim(ClaimTypes.Role, user.Role)
         };
 
         var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
@@ -166,32 +136,5 @@ public class AuthService : IAuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    private CustomerDto MapToDto(Customer customer)
-    {
-        return new CustomerDto
-        {
-            IdCustomer = customer.IdCustomer,
-            IdentificationNumber = customer.IdentificationNumber,
-            PersonType = customer.PersonType,
-            FirstName = customer.FirstName,
-            LastName = customer.LastName,
-            BusinessName = customer.BusinessName,
-            CommercialName = customer.CommercialName,
-            FullAddress = customer.Address?.FullAddress,
-            CityName = customer.Address?.City?.NameCity,
-            DepartmentName = customer.Address?.City?.Department?.NameDepartment,
-            CountryName = customer.Address?.City?.Department?.Country?.Name_country,
-            TaxRegimeCode = customer.TaxRegime?.Code,
-            TaxResponsibilityCode = customer.TaxResponsibility?.Code,
-            Contacts = customer.CustomerContacts.Select(cc => new CustomerContactDto
-            {
-                IdCustomerContact = cc.IdCustomerContact,
-                ContactType = cc.ContactType,
-                ContactValue = cc.ContactValue
-            }).ToList(),
-            CreatedAt = customer.CreatedAt
-        };
     }
 }

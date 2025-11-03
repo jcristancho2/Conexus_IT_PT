@@ -16,26 +16,15 @@ public class CustomerDto
     public string? LastName { get; set; } // apellidos
     public string? BusinessName { get; set; } // razon social
     public string? CommercialName { get; set; } // nombre comercial
-
-    // Dirección
     public string? FullAddress { get; set; } // dirección completa
     public string? CityName { get; set; } // ciudad
-    public string? DepartmentName { get; set; } // departamento
+    public string? DepartmentName { get; set; } // Departmento
     public string? CountryName { get; set; } // país
-
-    // Información tributaria
+    public string? TypeIdentificationName { get; set; } // tipo de identificación
     public string? TaxRegimeCode { get; set; } // régimen tributario
     public string? TaxResponsibilityCode { get; set; } // responsabilidad tributaria
-
-    // Contactos
     public List<CustomerContactDto> Contacts { get; set; } = new(); // lista de contactos
-
     public DateTime CreatedAt { get; set; } // fecha de creación
+    public DateTime? UpdatedAt { get; set; } // fecha de actualización
 }
 
-public class CustomerContactDto
-{
-    public int IdCustomerContact { get; set; } // id del contacto
-    public ContactType ContactType { get; set; } // tipo de contacto
-    public string? ContactValue { get; set; } // valor del contacto
-}

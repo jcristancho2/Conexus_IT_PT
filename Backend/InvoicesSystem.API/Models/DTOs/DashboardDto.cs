@@ -9,26 +9,67 @@ namespace InvoicesSystem.API.Models.DTOs;
 
 public class DashboardDto
 {
-    public decimal TotalSales { get; set; } // ventas totales
-    public int TotalInvoices { get; set; } // total de facturas
-    public int TotalCustomers { get; set; } // total de clientes
-    public int TotalProducts { get; set; } // total de productos
-    public List<InvoiceStatusChartDto> InvoicesByStatus { get; set; } = new(); // facturas por estado
-    public List<InvoiceDto> RecentInvoices { get; set; } = new(); // últimas facturas
-    public List<TopProductDto> TopProducts { get; set; } = new(); // top productos
+    // Estadísticas generales
+    public int TotalInvoices { get; set; }
+    public int TotalCustomers { get; set; }
+    public int TotalProducts { get; set; }
+    public decimal TotalSales { get; set; }
+    public decimal TotalRevenue { get; set; }
+    
+    // Gráficas de productos
+    public List<PieChartData> ProductSalesByQuantity { get; set; } = new();
+    public List<PieChartData> ProductSalesByRevenue { get; set; } = new();
+    public List<ProductSalesData> ProductSales { get; set; } = new();
+    
+    // Facturas por estado
+    public List<InvoiceStatusChartDto> InvoicesByStatus { get; set; } = new();
+    
+    // Facturas recientes
+    public List<RecentInvoiceDto> RecentInvoices { get; set; } = new();
+    
+    // Top productos
+    public List<TopProductDto> TopProducts { get; set; } = new();
+    
+    // Rango de fechas
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+}
+
+public class PieChartData
+{
+    public string? Label { get; set; }
+    public decimal Value { get; set; }
+}
+
+public class ProductSalesData
+{
+    public int ProductId { get; set; }
+    public string? ProductName { get; set; }
+    public decimal TotalSales { get; set; }
+    public decimal Percentage { get; set; }
 }
 
 public class InvoiceStatusChartDto
 {
-    public InvoiceStatus Status { get; set; } // estado de la factura
-    public int Count { get; set; } // cantidad de facturas
-    public decimal TotalAmount { get; set; } // monto total
+    public string? Status { get; set; }
+    public int Count { get; set; }
+    public decimal TotalAmount { get; set; }
+}
+
+public class RecentInvoiceDto
+{
+    public int IdInvoice { get; set; }
+    public string? InvoiceNumber { get; set; }
+    public string? CustomerName { get; set; }
+    public DateTime InvoiceDate { get; set; }
+    public decimal Total { get; set; }
+    public string? Status { get; set; }
 }
 
 public class TopProductDto
 {
-    public int IdProduct { get; set; } // id del producto
-    public string? ProductName { get; set; } // nombre del producto
-    public decimal TotalSold { get; set; } // total vendido
-    public decimal TotalRevenue { get; set; } // ingresos totales
+    public int IdProduct { get; set; }
+    public string? ProductName { get; set; }
+    public decimal TotalQuantity { get; set; }
+    public decimal TotalRevenue { get; set; }
 }

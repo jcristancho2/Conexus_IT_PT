@@ -121,6 +121,26 @@ namespace InvoicesSystem.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "users",
+                columns: table => new
+                {
+                    id_user = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_users", x => x.id_user);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "department",
                 columns: table => new
                 {
@@ -220,8 +240,6 @@ namespace InvoicesSystem.API.Migrations
                     last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     business_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     commercial_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -325,7 +343,7 @@ namespace InvoicesSystem.API.Migrations
                     id_invoice = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     id_customer = table.Column<int>(type: "integer", nullable: false),
-                    id_issuer = table.Column<int>(type: "integer", nullable: false),
+                    id_issuer = table.Column<int>(type: "integer", nullable: true),
                     invoice_number = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     invoice_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     due_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -343,10 +361,22 @@ namespace InvoicesSystem.API.Migrations
                 {
                     table.PrimaryKey("PK_invoice", x => x.id_invoice);
                     table.ForeignKey(
+                        name: "FK_invoice_customer",
+                        column: x => x.id_customer,
+                        principalTable: "customer",
+                        principalColumn: "id_customer",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_invoice_customer_CustomerIdCustomer",
                         column: x => x.CustomerIdCustomer,
                         principalTable: "customer",
                         principalColumn: "id_customer");
+                    table.ForeignKey(
+                        name: "FK_invoice_issuer",
+                        column: x => x.id_issuer,
+                        principalTable: "issuer",
+                        principalColumn: "id_issuer",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_invoice_issuer_IssuerIdIssuer",
                         column: x => x.IssuerIdIssuer,
@@ -489,6 +519,16 @@ namespace InvoicesSystem.API.Migrations
                 column: "CustomerIdCustomer");
 
             migrationBuilder.CreateIndex(
+                name: "IX_invoice_id_customer",
+                table: "invoice",
+                column: "id_customer");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_invoice_id_issuer",
+                table: "invoice",
+                column: "id_issuer");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_invoice_IssuerIdIssuer",
                 table: "invoice",
                 column: "IssuerIdIssuer");
@@ -543,6 +583,9 @@ namespace InvoicesSystem.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "product_tax");
+
+            migrationBuilder.DropTable(
+                name: "users");
 
             migrationBuilder.DropTable(
                 name: "invoice_detail");

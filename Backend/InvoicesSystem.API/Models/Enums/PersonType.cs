@@ -2,7 +2,7 @@ namespace InvoicesSystem.API.Models.Enums
 {
     public enum PersonType
     {
-        Natural,
-        Juridica
+        Natural = 0,    // Persona natural
+        Juridica = 1    // Persona jurídica
     }
 }

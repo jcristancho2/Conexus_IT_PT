@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InvoicesSystem.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251103112427_InitialCreate")]
+    [Migration("20251103175553_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -129,12 +129,6 @@ namespace InvoicesSystem.API.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("email");
-
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -166,12 +160,6 @@ namespace InvoicesSystem.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("password_hash");
 
                     b.Property<int>("PersonType")
                         .HasColumnType("integer")
@@ -282,7 +270,7 @@ namespace InvoicesSystem.API.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("id_customer");
 
-                    b.Property<int>("IdIssuer")
+                    b.Property<int?>("IdIssuer")
                         .HasColumnType("integer")
                         .HasColumnName("id_issuer");
 
@@ -328,9 +316,13 @@ namespace InvoicesSystem.API.Migrations
 
                     b.HasIndex("CustomerIdCustomer");
 
+                    b.HasIndex("IdCustomer");
+
+                    b.HasIndex("IdIssuer");
+
                     b.HasIndex("IssuerIdIssuer");
 
-                    b.ToTable("invoice");
+                    b.ToTable("invoice", (string)null);
                 });
 
             modelBuilder.Entity("InvoicesSystem.API.Models.Entities.InvoiceDetail", b =>
@@ -724,6 +716,62 @@ namespace InvoicesSystem.API.Migrations
                     b.ToTable("type_identification");
                 });
 
+            modelBuilder.Entity("InvoicesSystem.API.Models.Entities.User", b =>
+                {
+                    b.Property<int>("IdUser")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id_user");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUser"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("first_name");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_name");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("role");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("IdUser");
+
+                    b.ToTable("users");
+                });
+
             modelBuilder.Entity("InvoicesSystem.API.Models.Entities.Address", b =>
                 {
                     b.HasOne("InvoicesSystem.API.Models.Entities.City", "City")
@@ -805,11 +853,24 @@ namespace InvoicesSystem.API.Migrations
 
             modelBuilder.Entity("InvoicesSystem.API.Models.Entities.Invoice", b =>
                 {
-                    b.HasOne("InvoicesSystem.API.Models.Entities.Customer", "Customer")
+                    b.HasOne("InvoicesSystem.API.Models.Entities.Customer", null)
                         .WithMany("Invoices")
                         .HasForeignKey("CustomerIdCustomer");
 
+                    b.HasOne("InvoicesSystem.API.Models.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("IdCustomer")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_invoice_customer");
+
                     b.HasOne("InvoicesSystem.API.Models.Entities.Issuer", "Issuer")
+                        .WithMany()
+                        .HasForeignKey("IdIssuer")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_invoice_issuer");
+
+                    b.HasOne("InvoicesSystem.API.Models.Entities.Issuer", null)
                         .WithMany("Invoices")
                         .HasForeignKey("IssuerIdIssuer");
 

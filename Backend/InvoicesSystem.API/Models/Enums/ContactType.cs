@@ -2,8 +2,8 @@ namespace InvoicesSystem.API.Models.Enums
 {
     public enum ContactType
     {
-        Email,
-        Phone,
-        Other
+        Email = 1,
+        Phone = 2,
+        Other = 3
     }
 }

@@ -1,12 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using InvoicesSystem.API.Models.Enums;
-
 
 namespace InvoicesSystem.API.Models.Entities
 {
@@ -17,30 +13,28 @@ namespace InvoicesSystem.API.Models.Entities
         [Column("id_customer")]
         public int IdCustomer { get; set; }
 
+        // Relaciones obligatorias
         [Required]
         [Column("id_address")]
-        [ForeignKey(nameof(Address))]
         public int IdAddress { get; set; }
 
         [Required]
         [Column("id_type_identification")]
-        [ForeignKey(nameof(TypeIdentification))]
         public int IdTypeIdentification { get; set; }
 
         [Required]
         [Column("id_tax_regime")]
-        [ForeignKey(nameof(TaxRegime))]
-        public int IdTaxRegime { get; set; }
+        public int? IdTaxRegime { get; set; }
 
         [Required]
         [Column("id_tax_responsibility")]
-        [ForeignKey(nameof(TaxResponsibility))]
-        public int IdTaxResponsibility { get; set; }
+        public int? IdTaxResponsibility { get; set; }
 
+        // Datos del cliente
         [Required]
         [Column("identification_number")]
         [StringLength(30)]
-        public string? IdentificationNumber { get; set; }
+        public string IdentificationNumber { get; set; } = null!;
 
         [Required]
         [Column("person_type")]
@@ -68,10 +62,17 @@ namespace InvoicesSystem.API.Models.Entities
         [Column("updated_at")]
         public DateTime? UpdatedAt { get; set; }
 
-        // propiedades de navegacion
-        public virtual Address? Address { get; set; }
-        public virtual TypeIdentification? TypeIdentification { get; set; }
+        // ✅ PROPIEDADES DE NAVEGACIÓN CORREGIDAS
+        [ForeignKey("IdAddress")]  // ✅ Nombre de la propiedad FK
+        public virtual Address Address { get; set; } = null!;
+        
+        [ForeignKey("IdTypeIdentification")]  // ✅ Nombre de la propiedad FK
+        public virtual TypeIdentification TypeIdentification { get; set; } = null!;
+        
+        [ForeignKey("IdTaxRegime")]  // ✅ Nombre de la propiedad FK
         public virtual TaxRegime? TaxRegime { get; set; }
+        
+        [ForeignKey("IdTaxResponsibility")]  // ✅ Nombre de la propiedad FK
         public virtual TaxResponsibility? TaxResponsibility { get; set; }
 
         public virtual ICollection<CustomerContact> CustomerContacts { get; set; } = new List<CustomerContact>();

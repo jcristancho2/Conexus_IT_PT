@@ -4,233 +4,112 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using InvoicesSystem.API.Data;
+using Microsoft.AspNetCore.Authorization;
+using InvoicesSystem.API.Services.Interfaces;
 using InvoicesSystem.API.Models.DTOs;
-using InvoicesSystem.API.Models.Entities;
+using InvoicesSystem.API.Models.Responses;
 
 namespace InvoicesSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProductsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IProductService _productService;
 
-    public ProductsController(AppDbContext context)
+    public ProductsController(IProductService productService)
     {
-        _context = context;
+        _productService = productService;
     }
 
     // GET: api/Products
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts(
-        [FromQuery] string? search = null,
-        [FromQuery] bool? isActive = null,
+    public async Task<ActionResult<ApiResponse<IEnumerable<ProductDto>>>> GetAll(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null)
     {
-        var query = _context.Products
-            .Include(p => p.ProductTaxes)
-                .ThenInclude(pt => pt.Tax)
-            .AsQueryable();
+        var (products, total) = await _productService.GetAllAsync(page, pageSize, search);
 
-        // Filtros
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(p =>
-                (p.ProductName != null && p.ProductName.Contains(search)) ||
-                (p.CodeProduct != null && p.CodeProduct.Contains(search)) ||
-                (p.Description != null && p.Description.Contains(search))
-            );
-        }
+        Response.Headers["X-Total-Count"] = total.ToString();
+        Response.Headers["X-Page"] = page.ToString();
+        Response.Headers["X-Page-Size"] = pageSize.ToString();
 
-        if (isActive.HasValue)
-            query = query.Where(p => p.IsActive == isActive.Value);
-
-        var total = await query.CountAsync();
-        
-        var products = await query
-            .OrderBy(p => p.ProductName)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        var result = products.Select(p => MapToDto(p)).ToList();
-
-        Response.Headers.Add("X-Total-Count", total.ToString());
-        Response.Headers.Add("X-Page", page.ToString());
-        Response.Headers.Add("X-Page-Size", pageSize.ToString());
-
-        return Ok(result);
+        return Ok(ApiResponse<IEnumerable<ProductDto>>.SuccessResponse(
+            products,
+            $"Se encontraron {total} productos"
+        ));
     }
 
     // GET: api/Products/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProductDto>> GetProduct(int id)
+    public async Task<ActionResult<ApiResponse<ProductDto>>> GetById(int id)
     {
-        var product = await _context.Products
-            .Include(p => p.ProductTaxes)
-                .ThenInclude(pt => pt.Tax)
-            .FirstOrDefaultAsync(p => p.IdProduct == id);
+        var product = await _productService.GetByIdAsync(id);
 
         if (product == null)
-            return NotFound(new { message = $"Producto con ID {id} no encontrado" });
+            return NotFound(ApiResponse<ProductDto>.NotFoundResponse("Producto no encontrado"));
 
-        return Ok(MapToDto(product));
+        return Ok(ApiResponse<ProductDto>.SuccessResponse(product, "Producto obtenido exitosamente"));
     }
 
     // POST: api/Products
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto dto)
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto dto)
     {
-        // Validar que el código de producto sea único si se proporciona
-        if (!string.IsNullOrWhiteSpace(dto.CodeProduct))
+        try
         {
-            var existingProduct = await _context.Products
-                .FirstOrDefaultAsync(p => p.CodeProduct == dto.CodeProduct);
-            
-            if (existingProduct != null)
-                return BadRequest(new { message = "Ya existe un producto con ese código" });
+            var product = await _productService.CreateAsync(dto);
+
+            return Ok(ApiResponse<ProductDto>.SuccessResponse(
+                product, 
+                "Producto creado exitosamente"
+            ));
         }
-
-        var product = new Product
+        catch (Exception ex)
         {
-            CodeProduct = dto.CodeProduct,
-            ProductName = dto.ProductName,
-            Description = dto.Description,
-            UnitPrice = dto.UnitPrice,
-            UnitMeasure = dto.UnitMeasure,
-            IsActive = dto.IsActive,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        // Agregar impuestos
-        foreach (var taxId in dto.TaxIds)
-        {
-            var tax = await _context.Taxes.FindAsync(taxId);
-            if (tax == null)
-                return BadRequest(new { message = $"Impuesto con ID {taxId} no encontrado" });
-
-            product.ProductTaxes.Add(new ProductTax
-            {
-                IdTax = taxId
-            });
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
-
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
-
-        // Recargar con todas las relaciones
-        var createdProduct = await _context.Products
-            .Include(p => p.ProductTaxes)
-                .ThenInclude(pt => pt.Tax)
-            .FirstAsync(p => p.IdProduct == product.IdProduct);
-
-        return CreatedAtAction(nameof(GetProduct), new { id = product.IdProduct }, MapToDto(createdProduct));
     }
 
     // PUT: api/Products/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, CreateProductDto dto)
+    public async Task<ActionResult<ApiResponse<ProductDto>>> Update(int id, [FromBody] UpdateProductDto dto)
     {
-        var product = await _context.Products
-            .Include(p => p.ProductTaxes)
-            .FirstOrDefaultAsync(p => p.IdProduct == id);
-        
-        if (product == null)
-            return NotFound(new { message = $"Producto con ID {id} no encontrado" });
-
-        // Validar código único si se cambió
-        if (!string.IsNullOrWhiteSpace(dto.CodeProduct) && dto.CodeProduct != product.CodeProduct)
+        if (!ModelState.IsValid)
         {
-            var existingProduct = await _context.Products
-                .FirstOrDefaultAsync(p => p.CodeProduct == dto.CodeProduct);
-            
-            if (existingProduct != null)
-                return BadRequest(new { message = "Ya existe un producto con ese código" });
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(ApiResponse<ProductDto>.ValidationErrorResponse(errors));
         }
 
-        product.CodeProduct = dto.CodeProduct;
-        product.ProductName = dto.ProductName;
-        product.Description = dto.Description;
-        product.UnitPrice = dto.UnitPrice;
-        product.UnitMeasure = dto.UnitMeasure;
-        product.IsActive = dto.IsActive;
-
-        // Actualizar impuestos
-        _context.ProductTaxes.RemoveRange(product.ProductTaxes);
-        
-        foreach (var taxId in dto.TaxIds)
+        try
         {
-            var tax = await _context.Taxes.FindAsync(taxId);
-            if (tax == null)
-                return BadRequest(new { message = $"Impuesto con ID {taxId} no encontrado" });
+            var product = await _productService.UpdateAsync(id, dto);
 
-            product.ProductTaxes.Add(new ProductTax
-            {
-                IdProduct = id,
-                IdTax = taxId
-            });
+            if (product == null)
+                return NotFound(ApiResponse<ProductDto>.NotFoundResponse("Producto no encontrado"));
+
+            return Ok(ApiResponse<ProductDto>.SuccessResponse(product, "Producto actualizado exitosamente"));
         }
-
-        await _context.SaveChangesAsync();
-
-        return NoContent();
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<ProductDto>.ErrorResponse(ex.Message));
+        }
     }
 
     // DELETE: api/Products/5
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id)
+    public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
     {
-        var product = await _context.Products.FindAsync(id);
-        
-        if (product == null)
-            return NotFound(new { message = $"Producto con ID {id} no encontrado" });
+        var result = await _productService.DeleteAsync(id);
 
-        // Verificar si está en facturas
-        var hasInvoiceDetails = await _context.InvoiceDetails.AnyAsync(d => d.IdProduct == id);
-        if (hasInvoiceDetails)
-            return BadRequest(new { message = "No se puede eliminar el producto porque está en facturas" });
+        if (!result)
+            return NotFound(ApiResponse<object>.NotFoundResponse("Producto no encontrado"));
 
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    // GET: api/Products/active
-    [HttpGet("active")]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetActiveProducts()
-    {
-        var products = await _context.Products
-            .Include(p => p.ProductTaxes)
-                .ThenInclude(pt => pt.Tax)
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.ProductName)
-            .ToListAsync();
-
-        return Ok(products.Select(p => MapToDto(p)));
-    }
-
-    private ProductDto MapToDto(Product product)
-    {
-        return new ProductDto
-        {
-            IdProduct = product.IdProduct,
-            CodeProduct = product.CodeProduct,
-            ProductName = product.ProductName ?? "",
-            Description = product.Description,
-            UnitPrice = product.UnitPrice,
-            UnitMeasure = product.UnitMeasure ?? "",
-            IsActive = product.IsActive,
-            Taxes = product.ProductTaxes?.Select(pt => new ProductTaxDto
-            {
-                IdTax = pt.IdTax,
-                TaxName = pt.Tax?.TaxName ?? "",
-                TaxRate = pt.Tax?.TaxRate ?? 0
-            }).ToList() ?? new List<ProductTaxDto>(),
-            CreatedAt = product.CreatedAt
-        };
+        return Ok(ApiResponse<object>.SuccessResponse("Producto eliminado exitosamente"));
     }
 }

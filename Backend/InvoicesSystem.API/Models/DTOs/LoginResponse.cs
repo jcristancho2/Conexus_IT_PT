@@ -7,7 +7,7 @@ namespace InvoicesSystem.API.Models.DTOs;
 
 public class LoginResponse
 {
-    public string Token { get; set; } = string.Empty;
+    public string Token { get; set; } = null!;
     public DateTime Expiration { get; set; }
-    public CustomerDto Customer { get; set; } = null!;
+    public UserDto User { get; set; } = null!; 
 }
