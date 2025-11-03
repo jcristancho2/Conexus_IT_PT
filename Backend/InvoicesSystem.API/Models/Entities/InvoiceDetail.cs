@@ -17,7 +17,6 @@ public class InvoiceDetail
 
     [Key]
     [Column("id_product", Order = 1)]
-    [ForeignKey(nameof(Product))]
     public int IdProduct { get; set; }
 
     [Required]
@@ -47,8 +46,10 @@ public class InvoiceDetail
     public DateTime? UpdatedAt { get; set; }
 
     // propiedades de navegacion
-    [ForeignKey(nameof(Invoice))]
+    [ForeignKey(nameof(IdInvoice))]
     public virtual Invoice Invoice { get; set; } = null!;
+
+    [ForeignKey(nameof(IdProduct))]
     public virtual Product Product { get; set; } = null!;
 
     public virtual ICollection<InvoiceDetailTax> InvoiceDetailTaxes { get; set; } = new List<InvoiceDetailTax>();

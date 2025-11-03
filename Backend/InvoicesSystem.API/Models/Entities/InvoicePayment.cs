@@ -17,7 +17,6 @@ public class InvoicePayment
 
     [Key]
     [Column("id_payment_method", Order = 1)]
-    [ForeignKey(nameof(PaymentMethod))]
     public int IdPaymentMethod { get; set; }
 
     [Required]
@@ -39,8 +38,9 @@ public class InvoicePayment
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties
-    
-    [ForeignKey(nameof(Invoice))]
+    [ForeignKey(nameof(IdInvoice))]
     public virtual Invoice? Invoice { get; set; }
+
+    [ForeignKey(nameof(IdPaymentMethod))]
     public virtual PaymentMethod? PaymentMethod { get; set; }
 }
