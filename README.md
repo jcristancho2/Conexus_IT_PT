@@ -404,9 +404,9 @@ npm run dev
 ```
 El frontend estará disponible en: `http://localhost:5173`
 
-### Instalación con Docker
+### Instalación con Docker [se recomienda instalación local]
 
-#### Opción 1: Docker Compose (Recomendado)
+#### Opción 1: Docker Compose (pendiente por probar)
 
 ```bash
 # Desde la raíz del proyecto
