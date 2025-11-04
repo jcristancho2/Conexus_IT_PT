@@ -1,15 +1,29 @@
-# Frontend-specific .gitignore for React + TypeScript + Vite
-
 # Dependencies
-node_modules/
-/.pnp
-.pnp.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Production builds
-/dist
-/build
-/.next/
-/out/
+# Build outputs
+dist
+dist-ssr
+build
+out
+.next
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Logs
+logs
+*.log
 
 # Runtime data
 pids
@@ -18,19 +32,12 @@ pids
 *.pid.lock
 
 # Coverage directory used by tools like istanbul
-coverage/
+coverage
 *.lcov
-.nyc_output/
+.nyc_output
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
-
-# Diagnostic reports
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# Dependency directories
+jspm_packages/
 
 # Optional npm cache directory
 .npm
@@ -56,33 +63,29 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Yarn Integrity file
 .yarn-integrity
 
-# Vite cache
-.vite/
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
 
-# Parcel cache
-.cache/
-.parcel-cache/
+# Vite cache
+.vite
 
 # Storybook build outputs
 .out
 .storybook-out
-storybook-static/
+storybook-static
 
 # Temporary folders
 tmp/
 temp/
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.*.local
-
-# IDEs and editors
-.vscode/
-.idea/
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea
 *.swp
 *.swo
 *~
@@ -96,29 +99,44 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# TypeScript cache
-*.tsbuildinfo
-
-# Bundle analyzer
-bundle-analyzer-report.html
-
-# Local development
-.local
+# Windows
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # Testing
-# coverage/
-# jest/
-__tests__/coverage/
+.coverage
+coverage/
+*.tsbuildinfo
 
-# Cypress
-cypress/videos/
-cypress/screenshots/
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
 
-# Package manager lockfiles (choose one)
+# Tailwind CSS
+.tailwindcss-cache
+
+# Package manager lockfiles (optional - choose one)
+# Uncomment the ones you don't use:
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
 
-# API keys and sensitive config
-config/keys.json
-config/secrets.json
+# Local development
+.local
+*.local
+
+# Bundle analyzer
+bundle-analyzer-report.html
+
+# Database files (if using local DB for development)
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificate files
+*.pem
+*.key
+*.crt

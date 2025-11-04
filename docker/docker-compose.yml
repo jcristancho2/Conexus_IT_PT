@@ -8,21 +8,22 @@ networks:
 volumes:
   billing_db_data:
 
+
 services:
   db:
     image: postgres:16
     container_name: billing_postgres
     restart: always
     environment:
-      POSTGRES_DB: billing_system        # Nombre de la BD
-      POSTGRES_USER: postgres            # Usuario
-      POSTGRES_PASSWORD: postgres        # Contraseña
+      POSTGRES_DB: billing_system # Nombre de la BD
+      POSTGRES_USER: postgres # Usuario
+      POSTGRES_PASSWORD: postgres # Contraseña
     ports:
-      - "5434:5432"                      # Puerto externo 5434 -> interno 5432
+      - "5434:5432" # Puerto externo 5434 -> interno 5432
     volumes:
       - billing_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d billing_system"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d billing_system" ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -45,26 +46,25 @@ services:
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__PostgresDocker: "Host=billing_postgres;Port=5432;Database=billing_system;Username=postgres;Password=postgres"
     ports:
-      - "8081:8080"                      # Host:8081 → Contenedor:8080
+      - "8081:8080" # Host:8081 → Contenedor:8080
     networks:
       - billing_network
 
-  # Si deseas habilitar el frontend, descomenta este bloque
-  # frontend:
-  #   build:
-  #     context: ..
-  #     dockerfile: Frontend/InvoicesSystem.UI/Frontend.Dockerfile
-  #   container_name: billing_frontend
-  #   restart: always
-  #   depends_on:
-  #     api:
-  #       condition: service_healthy
-  #   environment:
-  #     VITE_API_URL: "http://billing_api:8080"
-  #   ports:
-  #     - "5173:5173"
-  #   networks:
-  #     - billing_network
+  frontend:
+    build:
+      context: ..
+      dockerfile: Frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8081
+    container_name: billing_frontend
+    restart: always
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "3000:80"
+    networks:
+      - billing_network
 
   pgadmin:
     image: dpage/pgadmin4:latest
