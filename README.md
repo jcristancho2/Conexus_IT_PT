@@ -341,7 +341,7 @@ se realiza normalizacion de DB hasta su 4FN incluyendo campos necesarios y reque
 
 #### 1. Clonar el Repositorio
 ```bash
-git clone <repository-url>
+git clone https://github.com/jcristancho2/Conexus_IT_PT
 cd Conexus_IT_PT
 ```
 
